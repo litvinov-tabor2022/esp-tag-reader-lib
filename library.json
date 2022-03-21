@@ -1,0 +1,33 @@
+{
+  "name": "ESPx NFC tag reader library",
+  "version": "0.1.0",
+  "description": "Library for integration of MFRC22 tag reader.",
+  "keywords": "nfc,tag,reader",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/litvinov-tabor2022/esp-tag-reader-lib.git"
+  },
+  "authors": [
+    {
+      "name": "Jan Kolena"
+    },
+    {
+      "name": "Matěj jehlička"
+    }
+  ],
+  "license": "Apache-2.0",
+  "dependencies": {
+    "pablo-sampaio/Easy MFRC522": "@^0.2.1"
+  },
+  "frameworks": ["arduino"],
+  "headers": ["MFRCTagReader.h"],
+  "platforms": [
+    "espressif8266",
+    "espressif32"
+  ],
+  "export": {
+    "include": [
+      "src/*"
+    ]
+  }
+}
