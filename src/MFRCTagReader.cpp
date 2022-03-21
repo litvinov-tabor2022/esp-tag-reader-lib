@@ -1,10 +1,10 @@
 #include "MFRCTagReader.h"
 
 bool MFRCTagReader::begin() {
-#ifdef MFRC_SIGNAL
+    #ifdef MFRC_SIGNAL_PIN
     pinMode(MFRC_SIGNAL_PIN, OUTPUT);
     digitalWrite(MFRC_SIGNAL_PIN, LOW);
-#endif
+    #endif
 
     device->PCD_SoftPowerDown();
     device->PCD_SoftPowerUp();
@@ -12,7 +12,7 @@ bool MFRCTagReader::begin() {
     device->PCD_Init();
 
     const bool selfTestOk = device->PCD_PerformSelfTest();
-    Serial.printf("RFID self-test: %s\n", selfTestOk ? "ok" : "failed");
+    Serial.printf("MFRC: RFID self-test: %s\n", selfTestOk ? "ok" : "failed");
     device->PCD_Init();
 
     if (!selfTestOk) return false;
@@ -25,9 +25,9 @@ void MFRCTagReader::addOnConnectCallback(const std::function<void(byte *)> &call
 }
 
 void MFRCTagReader::onTagConnected(byte *uuid) {
-#ifdef MFRC_SIGNAL
+    #ifdef MFRC_SIGNAL_PIN
     digitalWrite(MFRC_SIGNAL_PIN, HIGH);
-#endif
+    #endif
 
     for (auto &callback: onDetectCallbacks) callback(uuid);
 }
@@ -37,9 +37,9 @@ void MFRCTagReader::addOnDisconnectCallback(const std::function<void(void)> &cal
 }
 
 void MFRCTagReader::onTagDisconnected() {
-#ifdef MFRC_SIGNAL
+    #ifdef MFRC_SIGNAL_PIN
     digitalWrite(MFRC_SIGNAL_PIN, LOW);
-#endif
+    #endif
 
     for (auto &callback: onDisconnectCallbacks) callback();
 }
@@ -57,7 +57,7 @@ bool MFRCTagReader::write(byte *data, int size) {
         }
     }
 
-    logger->println("Write failure!!! Cancelling reset, disconnecting");
+    logger->println("MFRC: Write failure!!! Cancelling reset, disconnecting");
     resettingTagWriteSince = 0;
     tagConnectedPublic = false;
     tagConnected = false;
@@ -82,7 +82,7 @@ bool MFRCTagReader::read(byte *byte, const int size) {
         }
     }
 
-    logger->println("Read failure!!! Cancelling reset, disconnecting");
+    logger->println("MFRC: Read failure!!! Cancelling reset, disconnecting");
     resettingTagReadSince = 0;
     tagConnectedPublic = false;
     tagConnected = false;
@@ -92,10 +92,10 @@ bool MFRCTagReader::read(byte *byte, const int size) {
 }
 
 void MFRCTagReader::checkTagPresented() {
-    const u64 now = millis();
+    const uint64_t now = millis();
 
     if (resettingTagReadSince > 0 && now - resettingTagReadSince >= MFRC_RESET_TIMEOUT) {
-        logger->println("Read-resetting timeout, disconnecting");
+        logger->println("MFRC: Read-resetting timeout, disconnecting");
         resettingTagReadSince = 0;
         resettingTagWriteSince = 0;
         tagConnectedPublic = false;
@@ -105,7 +105,7 @@ void MFRCTagReader::checkTagPresented() {
     }
 
     if (resettingTagWriteSince > 0 && now - resettingTagWriteSince >= MFRC_RESET_TIMEOUT) {
-        logger->println("Write-resetting timeout, disconnecting");
+        logger->println("MFRC: Write-resetting timeout, disconnecting");
         resettingTagWriteSince = 0;
         resettingTagReadSince = 0;
         tagConnectedPublic = false;
@@ -122,14 +122,20 @@ void MFRCTagReader::checkTagPresented() {
             std::copy(device->uid.uidByte, device->uid.uidByte + MFRC_UID_LENGTH, lastUID);
 
             if (resettingTagWriteSince > 0) {
-                if (TAGREADER_DEBUG) logger->println("Not connecting, tag being write-reset; tag reset done");
+                #ifdef MFRC_DEBUG
+                logger->println("MFRC: Not connecting, tag being write-reset; tag reset done");
+                #endif
                 resettingTagWriteSince = 0;
             } else {
                 if (resettingTagReadSince > 0) {
-                    if (TAGREADER_DEBUG) logger->println("Not connecting, tag being read-reset; tag reset done");
+                    #ifdef MFRC_DEBUG
+                    logger->println("MFRC: Not connecting, tag being read-reset; tag reset done");
+                    #endif
                     resettingTagReadSince = 0;
                 } else {
-                    if (TAGREADER_DEBUG) logger->println("Connecting, not being reset");
+                    #ifdef MFRC_DEBUG
+                    logger->println("MFRC: Connecting, not being reset");
+                    #endif
                     onTagConnected(device->uid.uidByte);
                 }
             }
@@ -160,14 +166,20 @@ void MFRCTagReader::checkTagPresented() {
         if (resettingTagWriteSince == 0) {
             if (resettingTagReadSince == 0) {
                 tagConnectedPublic = false;
-                if (TAGREADER_DEBUG) logger->println("Disconnecting, not being reset");
+                #ifdef MFRC_DEBUG
+                logger->println("MFRC: Disconnecting, not being reset");
+                #endif
                 onTagDisconnected();
             } else {
-                if (TAGREADER_DEBUG) logger->println("Not disconnecting, tag being read-reset; tag reset done");
+                #ifdef MFRC_DEBUG
+                logger->println("MFRC: Not disconnecting, tag being read-reset; tag reset done");
+                #endif
             }
         } else {
             tagConnectedPublic = true; // don't admit the tag is reconnecting
-            if (TAGREADER_DEBUG) logger->println("Not disconnecting, tag being write-reset");
+            #ifdef MFRC_DEBUG
+            logger->println("MFRC: Not disconnecting, tag being write-reset");
+            #endif
         }
     }
 

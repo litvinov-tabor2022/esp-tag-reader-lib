@@ -3,35 +3,20 @@
 
 #include "Arduino.h"
 #include <mutex>
+#include <vector>
 #include "EasyMFRC522.h"
-
-#ifndef TAGREADER_DEBUG
-#define TAGREADER_DEBUG false
-#endif
 
 #ifndef MFRC_UID_LENGTH
 #define MFRC_UID_LENGTH 16
-#endif
-
-#ifdef MFRC_SIGNAL
-#ifdef MFRC_SIGNAL_PIN
-#define MFRC_SIGNAL_PIN 2
-#endif
 #endif
 
 #ifndef MFRC_RESET_TIMEOUT
 #define MFRC_RESET_TIMEOUT 500
 #endif
 
-typedef unsigned char u8;
-typedef int8_t i8;
-typedef unsigned short u16;
-typedef unsigned long u32;
-typedef unsigned long long u64;
-
 class MFRCTagReader {
 public:
-    MFRCTagReader(Stream *logger, u8 pinSS, u8 pinRST) : logger(logger) {
+    MFRCTagReader(Stream *logger, uint8_t pinSS, uint8_t pinRST) : logger(logger) {
         // I would put this to #begin. But every time I try to do that, it stops working and... fuck it, I can live with this.
         rfid = new EasyMFRC522(pinSS, pinRST);
         rfid->init();
@@ -64,12 +49,12 @@ private:
     MFRC522 *device;
     bool tagConnected = false;
     bool tagConnectedPublic = false;
-    u64 resettingTagWriteSince = 0;
-    u64 resettingTagReadSince = 0;
+    uint64_t resettingTagWriteSince = 0;
+    uint64_t resettingTagReadSince = 0;
     byte lastUID[MFRC_UID_LENGTH]{};
     std::vector<std::function<void(byte *)>> onDetectCallbacks;
     std::vector<std::function<void()>> onDisconnectCallbacks;
 };
 
 
-#endif //TAGREADER_H
+#endif //MFRCTagReader_H
