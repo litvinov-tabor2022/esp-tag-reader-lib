@@ -174,6 +174,7 @@ void MFRCTagReader::checkTagPresented() {
                 #ifdef MFRC_DEBUG
                 logger->println("MFRC: Not disconnecting, tag being read-reset; tag reset done");
                 #endif
+                resettingTagReadSince = 0;
             }
         } else {
             tagConnectedPublic = true; // don't admit the tag is reconnecting

@@ -1,6 +1,6 @@
 {
   "name": "ESPx NFC tag reader library",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Library for integration of MFRC22 tag reader.",
   "keywords": "nfc,tag,reader",
   "repository": {
