@@ -117,7 +117,7 @@ void MFRCTagReader::checkTagPresented() {
     if (!tagConnected) {
         if (device->PICC_IsNewCardPresent() && device->PICC_ReadCardSerial()) {
             tagConnected = true;
-            bool prevTagConnectedState = tagConnectedPublic;
+            const bool prevTagConnectedState = tagConnectedPublic;
             tagConnectedPublic = true;
 
             std::copy(device->uid.uidByte, device->uid.uidByte + MFRC_UID_LENGTH, lastUID);
@@ -139,6 +139,10 @@ void MFRCTagReader::checkTagPresented() {
                         logger->println("MFRC: Connecting, not being reset");
                         #endif
                         onTagConnected(device->uid.uidByte);
+                    } else {
+                        #ifdef MFRC_DEBUG
+                        logger->println("MFRC: Not connecting, it was already connected");
+                        #endif
                     }
                 }
             }
