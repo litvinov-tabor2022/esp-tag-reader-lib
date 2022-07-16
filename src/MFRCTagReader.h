@@ -51,6 +51,7 @@ private:
     bool tagConnectedPublic = false;
     uint64_t resettingTagWriteSince = 0;
     uint64_t resettingTagReadSince = 0;
+    uint64_t pretendingConnectionSince = 0;
     byte lastUID[MFRC_UID_LENGTH]{};
     std::vector<std::function<void(byte *)>> onDetectCallbacks;
     std::vector<std::function<void()>> onDisconnectCallbacks;

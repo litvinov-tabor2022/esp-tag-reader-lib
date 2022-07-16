@@ -98,6 +98,7 @@ void MFRCTagReader::checkTagPresented() {
         logger->println("MFRC: Read-resetting timeout, disconnecting");
         resettingTagReadSince = 0;
         resettingTagWriteSince = 0;
+        pretendingConnectionSince = 0;
         tagConnectedPublic = false;
         tagConnected = false;
         onTagDisconnected();
@@ -109,12 +110,26 @@ void MFRCTagReader::checkTagPresented() {
         resettingTagWriteSince = 0;
         resettingTagReadSince = 0;
         tagConnectedPublic = false;
+        pretendingConnectionSince = 0;
         tagConnected = false;
         onTagDisconnected();
         return;
     }
 
-    if (!tagConnected) {
+    if (pretendingConnectionSince > 0 && now - pretendingConnectionSince >= 500) {
+        pretendingConnectionSince = 0;
+
+        if (!tagConnected) {
+            #ifdef MFRC_DEBUG
+            logger->println("MFRC: Timeout of pretending the connection; disconnecting");
+            #endif
+            tagConnectedPublic = false;
+            onTagDisconnected();
+            return;
+        }
+    }
+
+    if (!tagConnected || tagConnectedPublic) {
         if (device->PICC_IsNewCardPresent() && device->PICC_ReadCardSerial()) {
             tagConnected = true;
             const bool prevTagConnectedState = tagConnectedPublic;
@@ -173,11 +188,14 @@ void MFRCTagReader::checkTagPresented() {
         if (resettingTagWriteSince == 0) {
             if (resettingTagReadSince == 0) {
                 tagConnectedPublic = false;
+                pretendingConnectionSince = 0;
                 #ifdef MFRC_DEBUG
                 logger->println("MFRC: Disconnecting, not being reset");
                 #endif
                 onTagDisconnected();
             } else {
+                tagConnectedPublic = true; // don't admit the tag is reconnecting
+                pretendingConnectionSince = millis();
                 #ifdef MFRC_DEBUG
                 logger->println("MFRC: Not disconnecting, tag being read-reset; tag reset done");
                 #endif
@@ -185,6 +203,7 @@ void MFRCTagReader::checkTagPresented() {
             }
         } else {
             tagConnectedPublic = true; // don't admit the tag is reconnecting
+            pretendingConnectionSince = millis();
             #ifdef MFRC_DEBUG
             logger->println("MFRC: Not disconnecting, tag being write-reset");
             #endif
